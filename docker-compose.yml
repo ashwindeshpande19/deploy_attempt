@@ -1,0 +1,29 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      MONGO_URL: mongodb://mongo:27017/meetup
+    depends_on:
+      mongo:
+        condition: service_healthy
+    command: sh -c 'sleep 10 && node tasks/seed.js && node app.js'
+
+  mongo:
+    image: mongo:6
+    container_name: meetup-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    restart: unless-stopped
+    healthcheck:
+      test: mongosh --eval "db.adminCommand('ping')"
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+volumes:
+  mongo-data:    # This was missing - needs to be at the root level
